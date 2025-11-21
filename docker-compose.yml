@@ -1,0 +1,111 @@
+
+
+# Definition of the services (containers) that make up the application
+services:
+  # --- Configuration Service (Spring Cloud Config) ---
+  # This service provides centralized configuration management for all other services.
+  campushub-config:
+    build: ./campushub-config
+    ports:
+      - "8888:8888" # Exposes the service on port 8888
+    environment:
+      - SPRING_APPLICATION_NAME=campushub-config
+      - SERVER_PORT=8888
+      - SPRING_CLOUD_CONFIG_SERVER_GIT_URI=https://github.com/campushub-org/campushub-cloud-config.git # Git repository for the configuration files
+    networks:
+      - campushub-network
+
+  # --- Service Registry (Spring Cloud Eureka) ---
+  # This service allows other services to register and discover each other.
+  campushub-registry:
+    build: ./campushub-registry
+    ports:
+      - "8761:8761" # Exposes the service on port 8761
+    environment:
+      - SPRING_APPLICATION_NAME=campushub-registry-service
+      - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://campushub-config:8888
+    networks:
+      - campushub-network
+    depends_on:
+      - campushub-config # Depends on the config service to be started first
+
+  # --- MySQL Database for User Service ---
+  # This service provides a MySQL database specifically for the user service.
+  campushub-user-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: campushub_user_db
+    ports:
+      - "3307:3306" # Exposes the database on host port 3307
+    networks:
+      - campushub-network
+
+  # --- MySQL Database for Salle Service ---
+  # This service provides a MySQL database specifically for the salle service.
+  campushub-salle-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: campushub_salle_db
+    ports:
+      - "3308:3306" # Exposes the database on host port 3308
+    networks:
+      - campushub-network
+
+  # --- API Gateway (Spring Cloud Gateway) ---
+  # This service is the single entry point for all client requests.
+  campushub-gateway-service:
+    build: ./campushub-gateway-service
+    ports:
+      - "8080:8080" # Exposes the gateway on port 8080
+    depends_on:
+      - campushub-config
+
+
+    environment:
+      - SPRING_APPLICATION_NAME=campushub-gateway-service
+      - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://campushub-config:8888
+    networks:
+      - campushub-network
+
+  # --- User Service ---
+  # This service manages user-related operations.
+  campushub-user-service:
+    build: ./campushub-user-service
+    ports:
+      - "8081:8081" # Exposes the service on port 8081
+    depends_on:
+      - campushub-config
+      - campushub-user-db # Depends on its specific MySQL database
+    environment:
+      - SPRING_APPLICATION_NAME=campushub-user-service
+      - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://campushub-config:8888
+    networks:
+      - campushub-network
+
+  # --- Salle Service ---
+  # This service manages room-related operations.
+  campushub-salle-service:
+    build: ./campushub-salle-service
+    ports:
+      - "8082:8082" # Exposes the service on port 8082
+    depends_on:
+      - campushub-config
+      - campushub-salle-db # Depends on its specific MySQL database
+    environment:
+      - SPRING_APPLICATION_NAME=campushub-salle-service
+      - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://campushub-config:8888
+    networks:
+      - campushub-network
+
+
+# --- Networks ---
+# Defines the network that the services will use to communicate with each other.
+networks:
+  campushub-network:
+    driver: bridge
