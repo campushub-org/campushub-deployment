@@ -71,41 +71,144 @@ services:
     networks:
       - campushub-network
 
-  # --- User Service ---
-  # This service manages user-related operations.
-  campushub-user-service:
-    build: ./campushub-user-service
-    ports:
-      - "8081:8081" # Exposes the service on port 8081
-    depends_on:
-      - campushub-config
-      - campushub-user-db # Depends on its specific MySQL database
-    environment:
-      - SPRING_APPLICATION_NAME=campushub-user-service
-      - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888
-      - SPRING_CONFIG_IMPORT=configserver:http://campushub-config:8888
-    networks:
-      - campushub-network
+                                                                                                                        
 
-  # --- Salle Service ---
-  # This service manages room-related operations.
-  campushub-salle-service:
-    build: ./campushub-salle-service
-    ports:
-      - "8082:8082" # Exposes the service on port 8082
-    depends_on:
-      - campushub-config
-      - campushub-salle-db # Depends on its specific MySQL database
-    environment:
-      - SPRING_APPLICATION_NAME=campushub-salle-service
-      - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888
-      - SPRING_CONFIG_IMPORT=configserver:http://campushub-config:8888
-    networks:
-      - campushub-network
+  # --- User Service ---                                                                                                
 
+  # This service manages user-related operations.                                                                       
 
-# --- Networks ---
-# Defines the network that the services will use to communicate with each other.
-networks:
-  campushub-network:
+  campushub-user-service:                                                                                               
+
+    build: ./campushub-user-service                                                                                     
+
+    ports:                                                                                                              
+
+      - "8081:8081" # Exposes the service on port 8081                                                                  
+
+    depends_on:                                                                                                         
+
+      - campushub-config                                                                                                
+
+      - campushub-user-db # Depends on its specific MySQL database                                                      
+
+    environment:                                                                                                        
+
+      - SPRING_APPLICATION_NAME=campushub-user-service                                                                  
+
+      - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888                                                            
+
+      - SPRING_CONFIG_IMPORT=configserver:http://campushub-config:8888                                                  
+
+    networks:                                                                                                           
+
+      - campushub-network                                                                                               
+
+                                                                                                                        
+
+  # --- Salle Service ---                                                                                               
+
+  # This service manages room-related operations.                                                                       
+
+  campushub-salle-service:                                                                                              
+
+    build: ./campushub-salle-service                                                                                    
+
+    ports:                                                                                                              
+
+      - "8082:8082" # Exposes the service on port 8082                                                                  
+
+    depends_on:                                                                                                         
+
+      - campushub-config                                                                                                
+
+      - campushub-salle-db # Depends on its specific MySQL database                                                     
+
+    environment:                                                                                                        
+
+      - SPRING_APPLICATION_NAME=campushub-salle-service                                                                 
+
+      - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888                                                            
+
+      - SPRING_CONFIG_IMPORT=configserver:http://campushub-config:8888                                                  
+
+    networks:                                                                                                           
+
+      - campushub-network                                                                                               
+
+                                                                                                                        
+
+  # --- MySQL Database for Support Service ---                                                                          
+
+  # This service provides a MySQL database specifically for the support service.                                        
+
+  campushub-support-db:                                                                                                 
+
+    image: mysql:8.0                                                                                                    
+
+    environment:                                                                                                        
+
+      MYSQL_ROOT_PASSWORD: root                                                                                         
+
+      MYSQL_DATABASE: campushub_supports                                                                                
+
+    ports:                                                                                                              
+
+      - "3309:3306" # Exposes the database on host port 3309                                                            
+
+    networks:                                                                                                           
+
+      - campushub-network                                                                                               
+
+                                                                                                                        
+
+  # --- Support de Cours Service (Python FastAPI) ---                                                                   
+
+  # This service manages course materials upload and management.                                                        
+
+  campushub-support-service:                                                                                            
+
+    build: ./campushub-support-service                                                                                  
+
+    ports:                                                                                                              
+
+      - "8003:8000" # Exposes the FastAPI service on host port 8003                                                     
+
+    environment:                                                                                                        
+
+      - DATABASE_URL=mysql+mysqlclient://root:root@campushub-support-db/campushub_supports # Connects to its dedicated DB
+
+      - CONFIG_SERVER_URL=http://campushub-config:8888                                                                  
+
+      - SERVICE_NAME=campushub-support-service                                                                          
+
+      - PROFILE=default                                                                                                 
+
+      - EUREKA_SERVER_URL=http://campushub-registry:8761/eureka/                                                        
+
+      - SERVICE_HOST=campushub-support-service # Internal hostname for Eureka registration                             
+
+      - SERVICE_PORT=8000 # Internal port of the FastAPI app                                                            
+
+    networks:                                                                                                           
+
+      - campushub-network                                                                                               
+
+    depends_on:                                                                                                         
+
+      - campushub-config                                                                                                
+
+      - campushub-registry                                                                                              
+
+      - campushub-support-db # Depends on its specific MySQL database
+
+                                                                                                                        
+
+# --- Networks ---                                                                                                      
+
+# Defines the network that the services will use to communicate with each other.                                        
+
+networks:                                                                                                               
+
+  campushub-network:                                                                                                    
+
     driver: bridge
