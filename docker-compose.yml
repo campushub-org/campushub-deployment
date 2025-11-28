@@ -57,11 +57,11 @@ services:
   campushub-gateway-service:
     build: ./campushub-gateway-service
     ports:
-      - "8080:8080" # Exposes the gateway on port 8080
-    depends_on:
-      - campushub-config
-
-
+      - "8080:8080"
+      - "8084:8084" # Exposes the management port for Actuator
+    # depends_on:
+    #   - campushub-config
+    #   - campushub-registry
     environment:
       - SPRING_APPLICATION_NAME=campushub-gateway-service
       - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888
