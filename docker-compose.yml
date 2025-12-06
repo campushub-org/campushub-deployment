@@ -172,6 +172,26 @@ services:
     networks:
       - campushub-network
 
+# --- Scheduling service
+  campushub-scheduling:
+    build: ./campushub-scheduling
+    container_name: campushub-scheduling
+    ports:
+      - "808:808"
+    depends_on:
+      - campushub-config
+      - campushub-registry
+    environment:
+      - SPRING_APPLICATION_NAME=campushub-scheduling
+      - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://campushub-config:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://campushub-registry:8761/eureka
+    networks:
+      - campushub-network
+
+
+
+
 # --- Networks ---
 # Defines the network that the services will use to communicate with each other.
 networks:
