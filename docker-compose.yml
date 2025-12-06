@@ -126,7 +126,6 @@ services:
       - SPRING_APPLICATION_NAME=campushub-support-service
       - SPRING_CLOUD_CONFIG_URI=http://campushub-config:8888
       - SPRING_CONFIG_IMPORT=configserver:http://campushub-config:8888
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://campushub-registry:8761/eureka
     networks:
       - campushub-network
 
